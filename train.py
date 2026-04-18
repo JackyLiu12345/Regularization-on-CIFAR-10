@@ -1,4 +1,4 @@
-"""Unified training script: ResNet-18 on CIFAR-10 with selectable regularization.
+"""Unified training script: ResNet-18 on CIFAR-10/100 with selectable regularization.
 
 This script lets you mix and match regularization techniques through CLI flags.
 It subsumes ``train_baseline.py`` (which uses no regularization flags) and adds:
@@ -11,14 +11,14 @@ It subsumes ``train_baseline.py`` (which uses no regularization flags) and adds:
 
 Usage
 -----
-    # Baseline (no extra regularization)
+    # Baseline on CIFAR-10
     python train.py
 
-    # Dropout + label smoothing
-    python train.py --dropout 0.3 --label-smoothing 0.1
+    # Baseline on CIFAR-100
+    python train.py --dataset cifar100
 
-    # Mixup + Cutout
-    python train.py --mixup-alpha 0.2 --cutout-length 16
+    # Dropout + label smoothing on CIFAR-100
+    python train.py --dataset cifar100 --dropout 0.3 --label-smoothing 0.1
 
     # Everything together
     python train.py --dropout 0.3 --label-smoothing 0.1 --mixup-alpha 0.2 --cutout-length 16 --plot
@@ -33,7 +33,8 @@ import torch.nn as nn
 
 from models.resnet import resnet18
 from utils import (
-    get_cifar10_loaders,
+    get_data_loaders,
+    num_classes_for,
     evaluate_loss_and_accuracy,
     mixup_data,
     mixup_criterion,
@@ -43,7 +44,13 @@ from utils import (
 
 def parse_args():
     p = argparse.ArgumentParser(
-        description="ResNet-18 on CIFAR-10 with selectable regularization"
+        description="ResNet-18 on CIFAR-10/100 with selectable regularization"
+    )
+
+    # ── Dataset ────────────────────────────────────────────────────────
+    p.add_argument(
+        "--dataset", type=str, default="cifar10", choices=["cifar10", "cifar100"],
+        help="Dataset to train on (default: cifar10)",
     )
 
     # ── Data ────────────────────────────────────────────────────────────
@@ -172,10 +179,13 @@ def main():
     if args.cutout_length > 0:
         reg_flags.append(f"Cutout({args.cutout_length})")
     reg_str = ", ".join(reg_flags) if reg_flags else "None (baseline)"
-    print(f"Device: {device}  |  Regularization: {reg_str}")
+    print(f"Device: {device}  |  Dataset: {args.dataset}  |  Regularization: {reg_str}")
+
+    n_classes = num_classes_for(args.dataset)
 
     # Data
-    train_loader, test_loader = get_cifar10_loaders(
+    train_loader, test_loader = get_data_loaders(
+        dataset=args.dataset,
         data_dir=args.data_dir,
         batch_size=args.batch_size,
         num_workers=args.num_workers,
@@ -183,7 +193,7 @@ def main():
     )
 
     # Model (with optional dropout)
-    model = resnet18(num_classes=10, dropout_rate=args.dropout).to(device)
+    model = resnet18(num_classes=n_classes, dropout_rate=args.dropout).to(device)
 
     # Loss (with optional label smoothing)
     criterion = nn.CrossEntropyLoss(label_smoothing=args.label_smoothing)

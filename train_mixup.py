@@ -1,4 +1,4 @@
-"""Training with Mixup data augmentation on CIFAR-10.
+"""Training with Mixup data augmentation on CIFAR-10/100.
 
 Mixup creates virtual training examples by linearly interpolating pairs of
 inputs and their labels.  Reference: Zhang et al., "mixup: Beyond Empirical
@@ -8,7 +8,7 @@ Usage
 -----
     python train_mixup.py                         # alpha=0.2 (default)
     python train_mixup.py --mixup-alpha 1.0
-    python train_mixup.py --mixup-alpha 0.2 --plot
+    python train_mixup.py --dataset cifar100 --mixup-alpha 0.2 --plot
 """
 
 import argparse
@@ -20,7 +20,8 @@ import torch.nn as nn
 
 from models.resnet import resnet18
 from utils import (
-    get_cifar10_loaders,
+    get_data_loaders,
+    num_classes_for,
     evaluate_loss_and_accuracy,
     mixup_data,
     mixup_criterion,
@@ -29,7 +30,9 @@ from utils import (
 
 
 def parse_args():
-    p = argparse.ArgumentParser(description="Mixup regularization on CIFAR-10")
+    p = argparse.ArgumentParser(description="Mixup regularization on CIFAR-10/100")
+    p.add_argument("--dataset", type=str, default="cifar10", choices=["cifar10", "cifar100"],
+                   help="Dataset to train on (default: cifar10)")
     p.add_argument("--data-dir", type=str, default="./data")
     p.add_argument("--batch-size", type=int, default=128)
     p.add_argument("--num-workers", type=int, default=2)
@@ -84,13 +87,15 @@ def main():
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(args.seed)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print(f"Device: {device}  |  Mixup alpha: {args.mixup_alpha}")
+    print(f"Device: {device}  |  Dataset: {args.dataset}  |  Mixup alpha: {args.mixup_alpha}")
 
-    train_loader, test_loader = get_cifar10_loaders(
-        args.data_dir, args.batch_size, args.num_workers
+    n_classes = num_classes_for(args.dataset)
+
+    train_loader, test_loader = get_data_loaders(
+        args.dataset, args.data_dir, args.batch_size, args.num_workers
     )
 
-    model = resnet18(num_classes=10).to(device)
+    model = resnet18(num_classes=n_classes).to(device)
     criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.SGD(
         model.parameters(), lr=args.lr, momentum=args.momentum,

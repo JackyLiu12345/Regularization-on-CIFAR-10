@@ -1,4 +1,4 @@
-"""Baseline training script: ResNet-18 + SGD on CIFAR-10.
+"""Baseline training script: ResNet-18 + SGD on CIFAR-10/100.
 
 Usage
 -----
@@ -21,18 +21,24 @@ import torch.nn as nn
 
 from models.resnet import resnet18
 from utils import (
-    get_cifar10_loaders,
-    compute_accuracy,
+    get_data_loaders,
+    num_classes_for,
     evaluate_loss_and_accuracy,
     plot_training_curves,
 )
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Baseline: ResNet-18 + SGD on CIFAR-10")
+    parser = argparse.ArgumentParser(description="Baseline: ResNet-18 + SGD on CIFAR-10/100")
+
+    # Dataset
+    parser.add_argument(
+        "--dataset", type=str, default="cifar10", choices=["cifar10", "cifar100"],
+        help="Dataset to train on (default: cifar10)",
+    )
 
     # Data
-    parser.add_argument("--data-dir", type=str, default="./data", help="CIFAR-10 data directory")
+    parser.add_argument("--data-dir", type=str, default="./data", help="Data directory")
     parser.add_argument("--batch-size", type=int, default=128, help="Mini-batch size")
     parser.add_argument("--num-workers", type=int, default=2, help="DataLoader workers")
 
@@ -116,17 +122,20 @@ def main():
         torch.cuda.manual_seed_all(args.seed)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print(f"Using device: {device}")
+    print(f"Using device: {device}  |  Dataset: {args.dataset}")
+
+    n_classes = num_classes_for(args.dataset)
 
     # Data
-    train_loader, test_loader = get_cifar10_loaders(
+    train_loader, test_loader = get_data_loaders(
+        dataset=args.dataset,
         data_dir=args.data_dir,
         batch_size=args.batch_size,
         num_workers=args.num_workers,
     )
 
     # Model
-    model = resnet18(num_classes=10).to(device)
+    model = resnet18(num_classes=n_classes).to(device)
 
     # Loss & optimizer
     criterion = nn.CrossEntropyLoss()
@@ -188,7 +197,8 @@ def main():
 
     # Visualization
     if args.plot:
-        plot_training_curves(history, save_dir=args.plot_dir, title_prefix="Baseline")
+        plot_training_curves(history, save_dir=args.plot_dir,
+                             title_prefix=f"Baseline ({args.dataset.upper()})")
 
 
 if __name__ == "__main__":

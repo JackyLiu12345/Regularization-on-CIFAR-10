@@ -8,10 +8,20 @@ import torch.nn as nn
 import torchvision
 import torchvision.transforms as transforms
 
-# ── CIFAR-10 statistics ─────────────────────────────────────────────────────
+# ── Dataset statistics ───────────────────────────────────────────────────────
 
 CIFAR10_MEAN = (0.4914, 0.4822, 0.4465)
 CIFAR10_STD = (0.2023, 0.1994, 0.2010)
+
+CIFAR100_MEAN = (0.5071, 0.4867, 0.4408)
+CIFAR100_STD = (0.2675, 0.2565, 0.2761)
+
+DATASET_INFO = {
+    "cifar10": {"mean": CIFAR10_MEAN, "std": CIFAR10_STD, "num_classes": 10,
+                "cls": torchvision.datasets.CIFAR10},
+    "cifar100": {"mean": CIFAR100_MEAN, "std": CIFAR100_STD, "num_classes": 100,
+                 "cls": torchvision.datasets.CIFAR100},
+}
 
 
 # ── Data loading ─────────────────────────────────────────────────────────────
@@ -60,11 +70,35 @@ def get_cifar10_loaders(data_dir="./data", batch_size=128, num_workers=2,
     cutout_length : int
         If > 0, apply Cutout with the given mask side length (e.g. 16).
     """
+    return get_data_loaders("cifar10", data_dir=data_dir, batch_size=batch_size,
+                            num_workers=num_workers, cutout_length=cutout_length)
+
+
+def get_data_loaders(dataset="cifar10", data_dir="./data", batch_size=128,
+                     num_workers=2, cutout_length=0):
+    """Return train and test data loaders for the specified dataset.
+
+    Supported datasets: ``cifar10``, ``cifar100``.
+
+    Parameters
+    ----------
+    dataset : str
+        Dataset name (``"cifar10"`` or ``"cifar100"``).
+    cutout_length : int
+        If > 0, apply Cutout with the given mask side length.
+    """
+    if dataset not in DATASET_INFO:
+        raise ValueError(f"Unknown dataset '{dataset}'. Choose from: {list(DATASET_INFO)}")
+
+    info = DATASET_INFO[dataset]
+    mean, std = info["mean"], info["std"]
+    dataset_cls = info["cls"]
+
     train_transforms = [
         transforms.RandomCrop(32, padding=4),
         transforms.RandomHorizontalFlip(),
         transforms.ToTensor(),
-        transforms.Normalize(CIFAR10_MEAN, CIFAR10_STD),
+        transforms.Normalize(mean, std),
     ]
     if cutout_length > 0:
         train_transforms.append(Cutout(cutout_length))
@@ -74,14 +108,14 @@ def get_cifar10_loaders(data_dir="./data", batch_size=128, num_workers=2,
     test_transform = transforms.Compose(
         [
             transforms.ToTensor(),
-            transforms.Normalize(CIFAR10_MEAN, CIFAR10_STD),
+            transforms.Normalize(mean, std),
         ]
     )
 
-    train_dataset = torchvision.datasets.CIFAR10(
+    train_dataset = dataset_cls(
         root=data_dir, train=True, download=True, transform=train_transform
     )
-    test_dataset = torchvision.datasets.CIFAR10(
+    test_dataset = dataset_cls(
         root=data_dir, train=False, download=True, transform=test_transform
     )
 
@@ -93,6 +127,13 @@ def get_cifar10_loaders(data_dir="./data", batch_size=128, num_workers=2,
     )
 
     return train_loader, test_loader
+
+
+def num_classes_for(dataset="cifar10"):
+    """Return the number of classes for the given dataset name."""
+    if dataset not in DATASET_INFO:
+        raise ValueError(f"Unknown dataset '{dataset}'. Choose from: {list(DATASET_INFO)}")
+    return DATASET_INFO[dataset]["num_classes"]
 
 
 # ── Evaluation ───────────────────────────────────────────────────────────────

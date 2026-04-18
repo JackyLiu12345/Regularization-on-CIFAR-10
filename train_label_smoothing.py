@@ -1,4 +1,4 @@
-"""Training with Label Smoothing regularization on CIFAR-10.
+"""Training with Label Smoothing regularization on CIFAR-10/100.
 
 Label smoothing replaces hard 0/1 targets with soft targets, preventing the
 model from becoming overconfident.  It was introduced by Szegedy et al. in
@@ -8,7 +8,7 @@ Usage
 -----
     python train_label_smoothing.py                           # smoothing=0.1
     python train_label_smoothing.py --label-smoothing 0.2
-    python train_label_smoothing.py --label-smoothing 0.1 --plot
+    python train_label_smoothing.py --dataset cifar100 --label-smoothing 0.1 --plot
 """
 
 import argparse
@@ -20,14 +20,17 @@ import torch.nn as nn
 
 from models.resnet import resnet18
 from utils import (
-    get_cifar10_loaders,
+    get_data_loaders,
+    num_classes_for,
     evaluate_loss_and_accuracy,
     plot_training_curves,
 )
 
 
 def parse_args():
-    p = argparse.ArgumentParser(description="Label smoothing on CIFAR-10")
+    p = argparse.ArgumentParser(description="Label smoothing on CIFAR-10/100")
+    p.add_argument("--dataset", type=str, default="cifar10", choices=["cifar10", "cifar100"],
+                   help="Dataset to train on (default: cifar10)")
     p.add_argument("--data-dir", type=str, default="./data")
     p.add_argument("--batch-size", type=int, default=128)
     p.add_argument("--num-workers", type=int, default=2)
@@ -72,13 +75,15 @@ def main():
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(args.seed)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print(f"Device: {device}  |  Label smoothing: {args.label_smoothing}")
+    print(f"Device: {device}  |  Dataset: {args.dataset}  |  Label smoothing: {args.label_smoothing}")
 
-    train_loader, test_loader = get_cifar10_loaders(
-        args.data_dir, args.batch_size, args.num_workers
+    n_classes = num_classes_for(args.dataset)
+
+    train_loader, test_loader = get_data_loaders(
+        args.dataset, args.data_dir, args.batch_size, args.num_workers
     )
 
-    model = resnet18(num_classes=10).to(device)
+    model = resnet18(num_classes=n_classes).to(device)
     criterion = nn.CrossEntropyLoss(label_smoothing=args.label_smoothing)
     optimizer = torch.optim.SGD(
         model.parameters(), lr=args.lr, momentum=args.momentum,

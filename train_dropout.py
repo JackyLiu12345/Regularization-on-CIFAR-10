@@ -1,4 +1,4 @@
-"""Training with Dropout regularization on CIFAR-10.
+"""Training with Dropout regularization on CIFAR-10/100.
 
 This is a convenience wrapper around ``train.py`` that sets dropout defaults.
 For full control, use ``train.py --dropout <rate>`` directly.
@@ -7,7 +7,7 @@ Usage
 -----
     python train_dropout.py                    # dropout=0.3 (default)
     python train_dropout.py --dropout 0.5
-    python train_dropout.py --dropout 0.3 --plot
+    python train_dropout.py --dataset cifar100 --dropout 0.3 --plot
 """
 
 import argparse
@@ -19,14 +19,17 @@ import torch.nn as nn
 
 from models.resnet import resnet18
 from utils import (
-    get_cifar10_loaders,
+    get_data_loaders,
+    num_classes_for,
     evaluate_loss_and_accuracy,
     plot_training_curves,
 )
 
 
 def parse_args():
-    p = argparse.ArgumentParser(description="Dropout regularization on CIFAR-10")
+    p = argparse.ArgumentParser(description="Dropout regularization on CIFAR-10/100")
+    p.add_argument("--dataset", type=str, default="cifar10", choices=["cifar10", "cifar100"],
+                   help="Dataset to train on (default: cifar10)")
     p.add_argument("--data-dir", type=str, default="./data")
     p.add_argument("--batch-size", type=int, default=128)
     p.add_argument("--num-workers", type=int, default=2)
@@ -70,13 +73,15 @@ def main():
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(args.seed)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print(f"Device: {device}  |  Dropout rate: {args.dropout}")
+    print(f"Device: {device}  |  Dataset: {args.dataset}  |  Dropout rate: {args.dropout}")
 
-    train_loader, test_loader = get_cifar10_loaders(
-        args.data_dir, args.batch_size, args.num_workers
+    n_classes = num_classes_for(args.dataset)
+
+    train_loader, test_loader = get_data_loaders(
+        args.dataset, args.data_dir, args.batch_size, args.num_workers
     )
 
-    model = resnet18(num_classes=10, dropout_rate=args.dropout).to(device)
+    model = resnet18(num_classes=n_classes, dropout_rate=args.dropout).to(device)
     criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.SGD(
         model.parameters(), lr=args.lr, momentum=args.momentum,

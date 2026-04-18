@@ -1,10 +1,10 @@
-# Regularization on CIFAR-10
+# Regularization on CIFAR-10/100
 
-A comparative study of regularization techniques for deep learning, using **ResNet-18** on the **CIFAR-10** dataset.
+A comparative study of regularization techniques for deep learning, using **ResNet-18** on the **CIFAR-10** and **CIFAR-100** datasets.
 
 ## Overview
 
-This repository provides a modular framework for training a CIFAR-10 adapted ResNet-18 with various regularization methods. Each method can be used independently via a dedicated training script, or combined freely through the unified `train.py` entry point.
+This repository provides a modular framework for training a CIFAR-adapted ResNet-18 with various regularization methods. Each method can be used independently via a dedicated training script, or combined freely through the unified `train.py` entry point. All scripts support both **CIFAR-10** (10 classes) and **CIFAR-100** (100 classes) via the `--dataset` flag.
 
 ### Regularization Methods Implemented
 
@@ -42,7 +42,11 @@ pip install -r requirements.txt
 ### Baseline (no extra regularization)
 
 ```bash
+# CIFAR-10
 python train_baseline.py --plot
+
+# CIFAR-100
+python train_baseline.py --dataset cifar100 --plot
 ```
 
 ### Individual Regularization Scripts
@@ -50,28 +54,32 @@ python train_baseline.py --plot
 ```bash
 # Dropout (default rate=0.3)
 python train_dropout.py --plot
+python train_dropout.py --dataset cifar100 --plot
 
 # Label Smoothing (default factor=0.1)
 python train_label_smoothing.py --plot
+python train_label_smoothing.py --dataset cifar100 --plot
 
 # Mixup (default alpha=0.2)
 python train_mixup.py --plot
+python train_mixup.py --dataset cifar100 --plot
 
 # Cutout (default mask=16×16)
 python train_cutout.py --plot
+python train_cutout.py --dataset cifar100 --plot
 ```
 
 ### Unified Script — Mix & Match
 
 ```bash
-# Combine dropout + label smoothing + Cutout
+# Combine dropout + label smoothing + Cutout on CIFAR-10
 python train.py --dropout 0.3 --label-smoothing 0.1 --cutout-length 16 --plot
 
-# Mixup + L2 weight decay
-python train.py --mixup-alpha 0.2 --weight-decay 1e-3 --plot
+# Mixup + L2 weight decay on CIFAR-100
+python train.py --dataset cifar100 --mixup-alpha 0.2 --weight-decay 1e-3 --plot
 
-# All together
-python train.py --dropout 0.3 --label-smoothing 0.1 --mixup-alpha 0.2 --cutout-length 16 --plot
+# All regularizations on CIFAR-100
+python train.py --dataset cifar100 --dropout 0.3 --label-smoothing 0.1 --mixup-alpha 0.2 --cutout-length 16 --plot
 ```
 
 ## Visualization
@@ -109,6 +117,7 @@ All scripts share a common set of arguments:
 
 | Flag | Default | Description |
 |---|---|---|
+| `--dataset` | cifar10 | Dataset: `cifar10` or `cifar100` |
 | `--epochs` | 200 | Number of training epochs |
 | `--lr` | 0.1 | Initial learning rate |
 | `--momentum` | 0.9 | SGD momentum |
@@ -118,7 +127,7 @@ All scripts share a common set of arguments:
 | `--lr-milestones` | 100 150 | Epochs to decay LR (step schedule only) |
 | `--lr-gamma` | 0.1 | LR decay factor (step schedule only) |
 | `--seed` | 42 | Random seed |
-| `--data-dir` | ./data | CIFAR-10 download directory |
+| `--data-dir` | ./data | Dataset download directory |
 | `--checkpoint-dir` | ./checkpoints | Saved model directory |
 | `--plot` | off | Save training curve plots |
 | `--plot-dir` | ./plots | Directory for saved plots |
@@ -134,14 +143,24 @@ All scripts share a common set of arguments:
 
 ## Model
 
-**ResNet-18 (CIFAR-10 variant)**
+**ResNet-18 (CIFAR variant)**
 
 - Initial 7×7 conv replaced with 3×3 conv (stride 1, padding 1) to preserve spatial resolution on 32×32 inputs
 - No initial max-pooling
 - Standard BasicBlock residual blocks: [2, 2, 2, 2]
 - Kaiming (He) weight initialization
 - ~11.2M parameters
+- Final FC layer adapts automatically to 10 (CIFAR-10) or 100 (CIFAR-100) classes
 - Optional dropout before the final average pooling layer
+
+## Datasets
+
+| Dataset | Classes | Train Images | Test Images | Image Size |
+|---|---|---|---|---|
+| CIFAR-10 | 10 | 50,000 | 10,000 | 32×32×3 |
+| CIFAR-100 | 100 | 50,000 | 10,000 | 32×32×3 |
+
+Both datasets are auto-downloaded on first run. Select the dataset with `--dataset cifar10` or `--dataset cifar100`.
 
 ## Regularization Method Details
 

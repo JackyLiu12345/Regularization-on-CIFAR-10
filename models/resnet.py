@@ -1,6 +1,6 @@
-"""ResNet-18 adapted for CIFAR-10 (32x32 images, 10 classes).
+"""ResNet-18 adapted for CIFAR-10/100 (32x32 images).
 
-The standard torchvision ResNet is designed for ImageNet (224x224).  For CIFAR-10
+The standard torchvision ResNet is designed for ImageNet (224x224).  For CIFAR
 we follow the common practice of replacing the initial 7x7 conv / maxpool with a
 single 3x3 conv so that spatial dimensions are not reduced too aggressively on
 the small 32x32 inputs.
@@ -44,7 +44,7 @@ class BasicBlock(nn.Module):
 
 
 class ResNet(nn.Module):
-    """Generic ResNet for CIFAR-10 sized inputs (32x32).
+    """Generic ResNet for CIFAR-sized inputs (32x32).
 
     Parameters
     ----------
@@ -125,12 +125,12 @@ class ResNet(nn.Module):
 
 
 def resnet18(num_classes=10, dropout_rate=0.0):
-    """Construct a ResNet-18 model for CIFAR-10.
+    """Construct a ResNet-18 model for CIFAR-10/100.
 
     Parameters
     ----------
     num_classes : int
-        Number of output classes (default 10 for CIFAR-10).
+        Number of output classes (10 for CIFAR-10, 100 for CIFAR-100).
     dropout_rate : float
         Dropout probability before the final pooling layer (default 0 = off).
     """
