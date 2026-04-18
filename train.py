@@ -64,7 +64,7 @@ def parse_args():
     p.add_argument("--weight-decay", type=float, default=5e-4, help="L2 weight decay")
 
     # ── LR schedule ────────────────────────────────────────────────────
-    p.add_argument("--epochs", type=int, default=200)
+    p.add_argument("--epochs", type=int, default=100)
     p.add_argument("--lr-schedule", choices=["cosine", "step"], default="cosine")
     p.add_argument("--lr-milestones", nargs="+", type=int, default=[100, 150])
     p.add_argument("--lr-gamma", type=float, default=0.1)
