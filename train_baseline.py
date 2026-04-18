@@ -31,7 +31,7 @@ def parse_args():
     parser.add_argument("--batch-size", type=int, default=128, help="Mini-batch size")
     parser.add_argument("--num-workers", type=int, default=2, help="DataLoader workers")
 
-    # Optimiser
+    # Optimizer
     parser.add_argument("--lr", type=float, default=0.1, help="Initial learning rate")
     parser.add_argument("--momentum", type=float, default=0.9, help="SGD momentum")
     parser.add_argument("--weight-decay", type=float, default=5e-4, help="L2 weight decay")
@@ -115,7 +115,7 @@ def main():
     # Model
     model = resnet18(num_classes=10).to(device)
 
-    # Loss & optimiser
+    # Loss & optimizer
     criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.SGD(
         model.parameters(),
