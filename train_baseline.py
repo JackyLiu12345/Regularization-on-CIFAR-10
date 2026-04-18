@@ -5,7 +5,7 @@ Usage
     python train_baseline.py [OPTIONS]
 
 Key defaults (standard CIFAR-10 baseline):
-    --epochs 200  --lr 0.1  --momentum 0.9  --weight-decay 5e-4
+    --epochs 100  --lr 0.1  --momentum 0.9  --weight-decay 5e-4
     --batch-size 128  --lr-schedule cosine
 
 The script prints per-epoch train loss, train accuracy, and test accuracy,
@@ -48,7 +48,7 @@ def parse_args():
     parser.add_argument("--weight-decay", type=float, default=5e-4, help="L2 weight decay")
 
     # Schedule
-    parser.add_argument("--epochs", type=int, default=200, help="Number of training epochs")
+    parser.add_argument("--epochs", type=int, default=100, help="Number of training epochs")
     parser.add_argument(
         "--lr-schedule",
         type=str,
