@@ -63,7 +63,7 @@ class ResNet(nn.Module):
         self.in_channels = 64
         self.dropout_rate = dropout_rate
 
-        # CIFAR-10 variant: 3x3 conv, no max-pool
+        # CIFAR variant: 3x3 conv, no max-pool
         self.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)
         self.bn1 = nn.BatchNorm2d(64)
 

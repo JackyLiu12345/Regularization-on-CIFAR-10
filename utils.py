@@ -62,13 +62,8 @@ def get_cifar10_loaders(data_dir="./data", batch_size=128, num_workers=2,
                         cutout_length=0):
     """Return CIFAR-10 train and test data loaders with standard preprocessing.
 
-    Training set uses random cropping and horizontal flipping.
-    Both sets are normalized to per-channel mean/std of CIFAR-10.
-
-    Parameters
-    ----------
-    cutout_length : int
-        If > 0, apply Cutout with the given mask side length (e.g. 16).
+    This is a backward-compatible wrapper around ``get_data_loaders()``
+    that defaults to CIFAR-10.
     """
     return get_data_loaders("cifar10", data_dir=data_dir, batch_size=batch_size,
                             num_workers=num_workers, cutout_length=cutout_length)
