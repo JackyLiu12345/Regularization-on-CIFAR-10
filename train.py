@@ -118,7 +118,12 @@ def train_one_epoch_standard(model, loader, criterion, optimizer, device):
 
 
 def train_one_epoch_mixup(model, loader, criterion, optimizer, device, alpha):
-    """Training loop with Mixup data augmentation."""
+    """Training loop with Mixup data augmentation.
+
+    Note: training accuracy is approximate because mixed examples do not have
+    a single true label.  Validation accuracy (computed on clean data) is the
+    reliable metric.
+    """
     model.train()
     running_loss = 0.0
     correct = 0

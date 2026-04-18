@@ -36,8 +36,8 @@ class Cutout:
         _, h, w = img.size()
         mask = torch.ones_like(img)
 
-        cy = np.random.randint(h)
-        cx = np.random.randint(w)
+        cy = np.random.randint(0, h)
+        cx = np.random.randint(0, w)
 
         y1 = max(0, cy - self.length // 2)
         y2 = min(h, cy + self.length // 2)

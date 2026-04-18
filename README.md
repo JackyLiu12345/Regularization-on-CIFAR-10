@@ -11,7 +11,7 @@ This repository provides a modular framework for training a CIFAR-10 adapted Res
 | Method | Flag(s) | Script | Reference |
 |---|---|---|---|
 | **Baseline** (no regularization) | — | `train_baseline.py` | — |
-| **L2 Weight Decay** | `--weight-decay` | `train.py` | Krogh & Hertz, 1991 |
+| **L2 Weight Decay** | `--weight-decay` | `train.py` | [Krogh & Hertz, 1991](https://papers.nips.cc/paper/1991/hash/8eefcfdf5990e441f0fb6f3fad709e21-Abstract.html) |
 | **Dropout** | `--dropout` | `train_dropout.py` | [Srivastava et al., 2014](https://jmlr.org/papers/v15/srivastava14a.html) |
 | **Label Smoothing** | `--label-smoothing` | `train_label_smoothing.py` | [Szegedy et al., 2016](https://arxiv.org/abs/1512.00567) |
 | **Mixup** | `--mixup-alpha` | `train_mixup.py` | [Zhang et al., 2018](https://arxiv.org/abs/1710.09412) |

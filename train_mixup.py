@@ -50,6 +50,12 @@ def parse_args():
 
 
 def train_one_epoch(model, loader, criterion, optimizer, device, alpha):
+    """Train one epoch with Mixup.
+
+    Note: training accuracy is approximate because mixed examples do not have
+    a single true label.  Validation accuracy (computed on clean data) is the
+    reliable metric.
+    """
     model.train()
     running_loss = 0.0
     correct = 0

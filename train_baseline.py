@@ -179,7 +179,7 @@ def main():
                     "epoch": epoch,
                     "model_state_dict": model.state_dict(),
                     "optimizer_state_dict": optimizer.state_dict(),
-                    "test_acc": val_acc,
+                    "val_acc": val_acc,
                 },
                 os.path.join(args.checkpoint_dir, "resnet18_baseline_best.pt"),
             )
