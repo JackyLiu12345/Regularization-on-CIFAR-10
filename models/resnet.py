@@ -4,6 +4,8 @@ The standard torchvision ResNet is designed for ImageNet (224x224).  For CIFAR-1
 we follow the common practice of replacing the initial 7x7 conv / maxpool with a
 single 3x3 conv so that spatial dimensions are not reduced too aggressively on
 the small 32x32 inputs.
+
+Optional dropout can be added between residual blocks for regularization.
 """
 
 import torch.nn as nn
@@ -42,11 +44,24 @@ class BasicBlock(nn.Module):
 
 
 class ResNet(nn.Module):
-    """Generic ResNet for CIFAR-10 sized inputs (32x32)."""
+    """Generic ResNet for CIFAR-10 sized inputs (32x32).
 
-    def __init__(self, block, layers, num_classes=10):
+    Parameters
+    ----------
+    block : nn.Module
+        Residual block class (e.g. ``BasicBlock``).
+    layers : list[int]
+        Number of blocks per layer group.
+    num_classes : int
+        Number of output classes.
+    dropout_rate : float
+        Dropout probability applied after each layer group (0 = no dropout).
+    """
+
+    def __init__(self, block, layers, num_classes=10, dropout_rate=0.0):
         super().__init__()
         self.in_channels = 64
+        self.dropout_rate = dropout_rate
 
         # CIFAR-10 variant: 3x3 conv, no max-pool
         self.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)
@@ -56,6 +71,11 @@ class ResNet(nn.Module):
         self.layer2 = self._make_layer(block, 128, layers[1], stride=2)
         self.layer3 = self._make_layer(block, 256, layers[2], stride=2)
         self.layer4 = self._make_layer(block, 512, layers[3], stride=2)
+
+        if dropout_rate > 0:
+            self.dropout = nn.Dropout(p=dropout_rate)
+        else:
+            self.dropout = nn.Identity()
 
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
         self.fc = nn.Linear(512 * block.expansion, num_classes)
@@ -97,12 +117,22 @@ class ResNet(nn.Module):
         x = self.layer3(x)
         x = self.layer4(x)
 
+        x = self.dropout(x)
         x = self.avgpool(x)
         x = x.view(x.size(0), -1)
         x = self.fc(x)
         return x
 
 
-def resnet18(num_classes=10):
-    """Construct a ResNet-18 model for CIFAR-10."""
-    return ResNet(BasicBlock, [2, 2, 2, 2], num_classes=num_classes)
+def resnet18(num_classes=10, dropout_rate=0.0):
+    """Construct a ResNet-18 model for CIFAR-10.
+
+    Parameters
+    ----------
+    num_classes : int
+        Number of output classes (default 10 for CIFAR-10).
+    dropout_rate : float
+        Dropout probability before the final pooling layer (default 0 = off).
+    """
+    return ResNet(BasicBlock, [2, 2, 2, 2], num_classes=num_classes,
+                  dropout_rate=dropout_rate)

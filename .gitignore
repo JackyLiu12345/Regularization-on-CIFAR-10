@@ -1,6 +1,9 @@
 data/
 checkpoints/
+plots/
 __pycache__/
 *.pyc
 *.pth
 *.pt
+.venv/
+.DS_Store

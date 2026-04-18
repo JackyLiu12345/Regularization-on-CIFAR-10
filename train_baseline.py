@@ -9,7 +9,7 @@ Key defaults (standard CIFAR-10 baseline):
     --batch-size 128  --lr-schedule cosine
 
 The script prints per-epoch train loss, train accuracy, and test accuracy,
-and saves the best model checkpoint to ``checkpoints/``.
+saves the best model checkpoint, and optionally plots training curves.
 """
 
 import argparse
@@ -20,7 +20,12 @@ import torch
 import torch.nn as nn
 
 from models.resnet import resnet18
-from utils import get_cifar10_loaders, compute_accuracy
+from utils import (
+    get_cifar10_loaders,
+    compute_accuracy,
+    evaluate_loss_and_accuracy,
+    plot_training_curves,
+)
 
 
 def parse_args():
@@ -63,6 +68,14 @@ def parse_args():
     parser.add_argument("--seed", type=int, default=42, help="Random seed")
     parser.add_argument(
         "--checkpoint-dir", type=str, default="./checkpoints", help="Directory for saved models"
+    )
+
+    # Visualization
+    parser.add_argument(
+        "--plot", action="store_true", help="Save training curve plots after training"
+    )
+    parser.add_argument(
+        "--plot-dir", type=str, default="./plots", help="Directory for saved plots"
     )
 
     return parser.parse_args()
@@ -135,35 +148,47 @@ def main():
     os.makedirs(args.checkpoint_dir, exist_ok=True)
 
     best_test_acc = 0.0
-    print(f"\n{'Epoch':>5}  {'Train Loss':>10}  {'Train Acc':>9}  {'Test Acc':>8}  {'LR':>8}  {'Time':>6}")
-    print("-" * 60)
+    history = {"train_loss": [], "val_loss": [], "train_acc": [], "val_acc": []}
+
+    print(f"\n{'Epoch':>5}  {'Train Loss':>10}  {'Train Acc':>9}  {'Val Loss':>8}  {'Val Acc':>7}  {'LR':>8}  {'Time':>6}")
+    print("-" * 72)
 
     for epoch in range(1, args.epochs + 1):
         start = time.time()
 
         train_loss, train_acc = train_one_epoch(model, train_loader, criterion, optimizer, device)
-        test_acc = compute_accuracy(model, test_loader, device)
+        val_loss, val_acc = evaluate_loss_and_accuracy(model, test_loader, criterion, device)
         scheduler.step()
 
         elapsed = time.time() - start
         current_lr = optimizer.param_groups[0]["lr"]
         print(
-            f"{epoch:5d}  {train_loss:10.4f}  {train_acc:8.2f}%  {test_acc:7.2f}%  {current_lr:.1e}  {elapsed:5.1f}s"
+            f"{epoch:5d}  {train_loss:10.4f}  {train_acc:8.2f}%  {val_loss:8.4f}  {val_acc:6.2f}%  {current_lr:.1e}  {elapsed:5.1f}s"
         )
 
-        if test_acc > best_test_acc:
-            best_test_acc = test_acc
+        # Record history
+        history["train_loss"].append(train_loss)
+        history["val_loss"].append(val_loss)
+        history["train_acc"].append(train_acc)
+        history["val_acc"].append(val_acc)
+
+        if val_acc > best_test_acc:
+            best_test_acc = val_acc
             torch.save(
                 {
                     "epoch": epoch,
                     "model_state_dict": model.state_dict(),
                     "optimizer_state_dict": optimizer.state_dict(),
-                    "test_acc": test_acc,
+                    "test_acc": val_acc,
                 },
                 os.path.join(args.checkpoint_dir, "resnet18_baseline_best.pt"),
             )
 
     print(f"\nBest test accuracy: {best_test_acc:.2f}%")
+
+    # Visualization
+    if args.plot:
+        plot_training_curves(history, save_dir=args.plot_dir, title_prefix="Baseline")
 
 
 if __name__ == "__main__":
